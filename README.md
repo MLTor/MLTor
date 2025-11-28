@@ -1,6 +1,6 @@
 # MLTor
 
-# 📚 Project Overview
+# Project Overview
 
 This repository contains data, feature extraction code, and evaluation scripts for website-fingerprinting (WF) under both closed-world and open-world scenarios.
 
@@ -9,7 +9,7 @@ The goals are:
 - to extract handcrafted traffic features (full / robust / basic),
 - to evaluate robustness of traffic classification under various WF defense settings (split, padding, domain shift).
 
-# 🗂️ Dataset
+# Dataset
 We provide serialized datasets for both closed-world and open-world experiments.
 Each dataset contains monitored (known sites) and unmonitored (unknown sites) traffic traces.
 ## Dataset Files
@@ -49,7 +49,7 @@ This runs:
 - Fixed split evaluation (run_fixed_split_pipeline)
 - Visualization
 
-## 📄Reference Papers
+## Reference Papers
 - Deep Fingerprinting (Sirinam et al., CCS 2018) — baseline deep model.
 - Subverting Website Fingerprinting Defenses with Robust Traffic Representation (Shen et al., 2023) — feature inspiration (TAM representation).
 
