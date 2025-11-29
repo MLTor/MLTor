@@ -100,7 +100,11 @@ Traffic defenses are simulated through split-domain datasets and robust feature 
 
 ## Run Full Pipeline
 
-You can reproduce the experimental results by running the main Jupyter Notebook. This notebook covers feature extraction, preprocessing, and evaluation for all three scenarios (Closed, Open-Binary, Open-Multi).
+You can reproduce the experimental results by running the main Jupyter Notebook. 
+```python
+break_WF_defense.ipynb
+```
+This notebook covers feature extraction, preprocessing, and evaluation for all three scenarios (Closed, Open-Binary, Open-Multi).
 You can run these steps sequentially in the provided notebook/script.
 
 **Prerequisites:**
