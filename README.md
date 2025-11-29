@@ -152,10 +152,10 @@ Evaluate the ability to distinguish Monitored vs. Unmonitored traffic.
 
 ```python
 # Find optimal threshold (ROC-AUC, TPR, FPR, etc.)
-df_auto = run_auto_threshold_binary_all(mon_data_full, unmon_data_full, models_to_open_binary)
+df_auto_full = run_auto_threshold_binary_all(mon_data_full, unmon_data_full, models_to_open_binary)
 
 # Run evaluation with fixed thresholds
-df_fixed = run_fixed_threshold_binary_all(mon_data_basic, unmon_data_basic, models_to_open_binary, th_basic)
+df_fixed_full = run_fixed_threshold_binary_all(mon_data_full, unmon_data_full, models_to_open_binary, th_full)
 ```
 
 **Step 2: Visualization**
@@ -163,7 +163,7 @@ df_fixed = run_fixed_threshold_binary_all(mon_data_basic, unmon_data_basic, mode
 
 ```python
 # Plot F1-Score, ROC-AUC, and TPR vs. FPR curves
-plot_open_binary_all(df_auto_full, df_auto_robust, df_auto_basic)
+plot_open_binary_all(df_fixed_full, df_fixed_robust, df_fixed_basic)
   ```
 
 ### 4\. Experiment: Open-World (Multi-class)
