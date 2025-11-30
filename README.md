@@ -223,6 +223,7 @@ Please address any questions or comments to the authors of the paper. The main d
 
   - **Yoonhyung Park** (pyoon820@gmail.com)
   - **Hyewon Kim** (hhongyeahh@gmail.com)
+  - **Jeongin Heo** (jeongin0822@gmail.com)
   - *(TODO: \<팀원 이메일 추가하기\>)*
 
 <!-- end list -->
