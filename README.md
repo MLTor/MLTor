@@ -36,7 +36,47 @@ X = pickle.load(open('mon_standard.pkl', 'rb'))
 
 ## Closed-World
 
-*(Content to be updated)*
+**Goal**: Classify traffic traces into one of 95 monitored websites(0-94). 
+
+**Key Metrics**: Accuracy, Macro-F1. 
+
+### 1. How to Run
+To run the Closed-World scenario, loacate the **Configuration** section at the beginning of the notebook and set the `SCENARIO` variable to `'closed'`.
+
+```SCENARIO = 'closed'```
+
+*Simply run the entire notebook after setting this variable.*
+
+### 2. Execution Pipeline
+When `SCENARIO = 'closed'`, the following pipeline is executed:
+
+1) Data Loading: 
+- Automatically loads monitored traffic data.
+- *Note*: Unmonitored data loading is skipped to optimize memory usage.
+
+2) Model Optimization (RF vs XGB):
+- Compares Random Forest and XGBoost under various correlation thresholds (e.g., 0.95, 0.99).
+- Automatically selects the best model based on **Accuracy**.
+
+3) Feature Selection: 
+- Applies `EnhancedPreProcessor` to remove highly correlated feature using the optimal threshold.
+
+4) Final Evalution: 
+- Outputs the **Best Model, Optimal Threshold, Accuracy**, and **Macro-F1** score.
+
+### 3. Expected Output
+The console will display the model selection process and final results:
+```
+================================================================================
+ CLOSED-WORLD MODEL SELECTION  (Primary Metric: Accuracy)
+================================================================================
+
+ SELECTED MODEL: Random Forest
+  • Corr Threshold: 0.95
+  • Accuracy: 0.8412
+  • Macro F1: 0.8350
+================================================================================
+```
 
 -----
 
