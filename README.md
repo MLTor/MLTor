@@ -50,19 +50,19 @@ To run the Closed-World scenario, loacate the **Configuration** section at the b
 ### 2. Execution Pipeline
 When `SCENARIO = 'closed'`, the following pipeline is executed:
 
-1) Data Loading: 
-- Automatically loads monitored traffic data.
-- *Note*: Unmonitored data loading is skipped to optimize memory usage.
+1) **Data Loading**: 
+ - Automatically loads monitored traffic data.
+ - *Note*: Unmonitored data loading is skipped to optimize memory usage.
 
-2) Model Optimization (RF vs XGB):
-- Compares Random Forest and XGBoost under various correlation thresholds (e.g., 0.95, 0.99).
-- Automatically selects the best model based on **Accuracy**.
+2) **Model Optimization (RF vs XGB)**:
+ - Compares Random Forest and XGBoost under various correlation thresholds (e.g., 0.95, 0.99).
+ - Automatically selects the best model based on **Accuracy**.
 
-3) Feature Selection: 
-- Applies `EnhancedPreProcessor` to remove highly correlated feature using the optimal threshold.
+3) **Feature Selection**: 
+ - Applies `EnhancedPreProcessor` to remove highly correlated feature using the optimal threshold.
 
-4) Final Evalution: 
-- Outputs the **Best Model, Optimal Threshold, Accuracy**, and **Macro-F1** score.
+4) **Final Evalution**: 
+ - Outputs the **Best Model, Optimal Threshold, Accuracy**, and **Macro-F1** score.
 
 ### 3. Expected Output
 The console will display the model selection process and final results:
