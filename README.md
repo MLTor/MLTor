@@ -46,7 +46,7 @@ You can reproduce the experimental results by running the main Jupyter Notebook.
 Closed.ipynb
 ```
 
-**Note**: To execute the **Closed-World** scenario, locate the Configuration section at the beginning of the notebook and ensure the `SCENARIO` variable is set correctly.
+**Note**: To execute the **Closed-World** scenario, locate the **Configuration** section at the beginning of the notebook and ensure the `SCENARIO` variable is set correctly.
 
 ```SCENARIO = 'closed'```
 
