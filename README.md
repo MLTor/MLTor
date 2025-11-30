@@ -41,7 +41,12 @@ X = pickle.load(open('mon_standard.pkl', 'rb'))
 **Key Metrics**: Accuracy, Macro-F1. 
 
 ### 1. How to Run
-To run the Closed-World scenario, loacate the **Configuration** section at the beginning of the notebook and set the `SCENARIO` variable to `'closed'`.
+You can reproduce the experimental results by running the main Jupyter Notebook. 
+```python
+Closed.ipynb
+```
+
+**Note**: To execute the **Closed-World** scenario, locate the Configuration section at the beginning of the notebook and ensure the `SCENARIO` variable is set correctly.
 
 ```SCENARIO = 'closed'```
 
