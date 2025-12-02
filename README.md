@@ -134,12 +134,9 @@ SCENARIO = 'open_binary'
       * Unmonitored traffic (value defined in `CURRENT_CONFIG['unmon_label']`) → `-1`
 
 3.  **Train/Test Split**:
-      * The full dataset (`X`, `y`) is split into Monitored (`X_mon`, `y_mon`) and Unmonitored (`X_unmon`, `y_unmon`) groups based on the original labels.
-      * Monitored Data splitting: `X_mon` is split into train set (`X_mon_train`) and test set (`X_mon_test`) for training and testing Known capabilities.
-      * Unmonitored Data splitting: `X_unmon` is split to create `X_unmon_test` (used for testing only).
-      * *Note*: The models are trained exclusively on the Monitored Training Data (`X_mon_train`) with their original multi-class labels (`0` to `94`)
-      *  even though the final task is binary. This forces the model to learn the specific characteristic of the 95 known websites, which is critical for calculating confidence for Open-Set Rejection later.
-
+      * The full dataset (X, y_binary) is split into training (X_train, y_train) and testing (X_test, y_test) sets using stratified sampling `stratify=y_binary` to preserve class balance.
+      * `test_size` and `random_state` from `CURRENT_CONFIG`
+        
 4.  **Nested Evaluation Loop**:
     A results list (`results_binary`) is created and filled with results for every combination of:
 
@@ -155,12 +152,13 @@ SCENARIO = 'open_binary'
       * `X_test` → `transform`
       * This removes highly correlated features according to the specified threshold.
 
-6.  **Model Training (Monitored Data only, Once per Correlation Threshold)**:
+6.  **Model Training (Once per Correlation Threshold)**:
     * For each correlation threshold, the notebook trains:
       * Random Forest (RF)
-        *  Trained on `X_mon_train_prep` with its multi-class labels (`0` to `94`)
+        *  Trained on `X_train_prep` with binary labels `y_train` 
       * XGBoost (XGB)
-        * Uses `multi:softprob` objective and is trained on `X_mon_train_prep` with its multi-class labels (`0` to `94`).
+        * Uses CustomLabelEncoder to convert the binary labels {-1, 1} into encoded form {0, 1} for XGBoost's `binary:logistic` objective.
+        * Trained on preprocessed features and encoded labels.
         * Note: Each model is trained only once per correlation threshold; threshold tuning happens afterward.
        
 7.  **Confidence-Based Threshold Tuning & Rejection**:
@@ -182,7 +180,7 @@ SCENARIO = 'open_binary'
 
      * This implements an open-world rejection mechanism: If the model is not confident enough, classify as unmonitored.
 
-9.  **Final Model Selection**:
+8.  **Final Model Selection**:
      * The final model is automatically selected based on the highest **ROC-AUC** score achieved across all configurations.
      * Outputs the **Best Model, Optimal Correlation Threshold, Optimal Threshold Percentile, ROC-AUC, TPR, FPR**, and **Precision**.
 
