@@ -157,7 +157,7 @@ SCENARIO = 'open_binary'
       * Random Forest (RF)
         *  Trained on `X_train_prep` with binary labels `y_train` 
       * XGBoost (XGB)
-        * Uses CustomLabelEncoder to convert the binary labels {-1, 1} into encoded form {0, 1} for XGBoost's `binary:logistic` objective.
+        * Uses `CustomLabelEncoder` to convert the binary labels {-1, 1} into encoded form {0, 1} for XGBoost's `binary:logistic` objective.
         * Trained on preprocessed features and encoded labels.
         * Note: Each model is trained only once per correlation threshold; threshold tuning happens afterward.
        
@@ -190,13 +190,13 @@ The console will display the model selection process and final results:
 ================================================================================
 OPEN-WORLD BINARY MODEL SELECTION  (Primary: ROC-AUC)
 ================================================================================
- SELECTED MODEL: XGB
-  • Corr Threshold: 1.0
-  • Threshold Percentile: 3.0%
-  • ROC-AUC: 0.9676
-  • TPR:     0.9863
-  • FPR:     0.2733
-  • Precision: 0.9581
+  • Model                    : XGB
+  • Corr Threshold           : 1.0000
+  • Threshold Percentile     : 3.0000
+  • Roc Auc                  : 0.9676
+  • Tpr                      : 0.9863
+  • Fpr                      : 0.2733
+  • Precision                : 0.9581
 ================================================================================
 ```
 
