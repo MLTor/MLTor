@@ -214,19 +214,17 @@ OPEN-WORLD BINARY MODEL SELECTION  (Primary: ROC-AUC)
  * **Binary Detection Metrics**
    * **ROC-AUC** — *Primary* model-selection metric
    * **Precision** — *Secondary* selection metric
-   * **TPR** — True Positive Rate (Monitored correctly accepted)
-   * **FPR** — False Positive Rate (Unmonitored incorrectly accepted)
-   * **TNR** — True Negative Rate (Correct Unknown rejection)
-   * **PR-AUC** — Precision–Recall AUC
+   * **TPR** — True Positive Rate 
+   * **FPR** — False Positive Rate 
+   * **TNR** — True Negative Rate 
 
  * **95-Class Identification Metrics**
-   * Computed **only on samples that pass the open-set rejection**:
+   * Computed **only for samples that are accepted**:
    * **Monitored Accuracy**
    * **Monitored Macro-F1**
 
- * **Overall Metrics (All Test Samples)**
+ * **Evaluated on all test samples**
    * **Overall Accuracy**
-   * **Overall Macro-F1**
 
 
 ### 1\. How to Run
@@ -246,8 +244,8 @@ SCENARIO = 'open_multi'
        * **Monitored dataset** (95 classes)
        * **Unmonitored dataset** (label = `-1`)
        * **Important:**
-          * Only Monitored samples are used for training.
-          * Unmonitored samples are used **only for testing** → ensures true open-set evaluation.
+          * Training uses only Monitored samples
+          * Unmonitored samples are used **only for testing** 
      
 2.  **Train/Test Split**
 
@@ -256,33 +254,48 @@ SCENARIO = 'open_multi'
      X_mon_train, X_mon_test, y_mon_train, y_mon_test = train_test_split(..., stratify=y_mon)
      
      # Unmonitored split (test only)
-     _, X_unmon_test, _, y_unmon_test = train_test_split(...)
+     X_unmon_train, X_unmon_test, ... = train_test_split(...)
      ```
-     * **Combined test set:**
-       ```python
-       X_test_all = np.vstack([X_mon_test_prep, X_unmon_test_prep])
-       y_test_all = np.concatenate([y_mon_test, y_unmon_test])
-       ```
+    * Note:
+        Only X_unmon_test is used for evaluation. The unmonitored train split is
+        not used because the model is trained exclusively on monitored samples.
+
 3.  **Nested Evaluation Loop**
      * For each:
        * **Correlation Threshold** ∈ `[1.0, 0.99, 0.98, 0.95, 0.9]`
        * **Threshold Percentile** ∈ `[10, 15, 20, 25, 30]`
        * **Model** ∈ `{RF, XGB}`
-      the notebook performs a full evaluation. All results are appended to `results_open`.
+         
+      the notebook runs:
+
+      * Preprocessing
+      * Model training (monitored only)
+      * Open-set rejection
+      * Evaluation
+      
+      All results go into:
+      
+      ```
+      results_open
+      ```
+      
+      ---
 
 4.  **Preprocessing — Per Correlation Threshold**
-     * Your code applies the preprocessing as:
-        ```python
-        prep = EnhancedPreprocessor(correlation_threshold=corr_th)
-        
-        X_mon_train_prep = prep.fit_transform(X_mon_train_df)   # Fit only on monitored train
-        X_mon_test_prep  = prep.transform(X_mon_test_df)
-        X_unmon_test_prep= prep.transform(X_unmon_test_df)
-        ```
-     * The preprocessor performs:
-       * Correlation-based feature pruning
-       * StandardScaler normalization
-       * Fit on **Monitored training only** (to avoid leakage)
+      ```python
+      prep = EnhancedPreprocessor(correlation_threshold=corr_th)
+      
+      X_mon_train_prep = prep.fit_transform(X_mon_train)
+      X_mon_test_prep  = prep.transform(X_mon_test)
+      X_unmon_test_prep = prep.transform(X_unmon_test)
+      ```
+      
+      The preprocessor performs:
+      
+      * Correlation-based feature pruning
+      * StandardScaler normalization
+      * **Fit using only Monitored training data**
+      * Stores `feature_names`, ensuring proper column ordering at transform time
 
 5.  **Model Training**
      * Two models are trained **once per correlation threshold**.
@@ -306,106 +319,115 @@ SCENARIO = 'open_multi'
          ```
      * Models are **never trained on unmonitored data**.
 
-6.  **Precompute Probabilities (Optimization)**
-     * Your updated code **precomputes probabilities only once**, improving speed:
-       ```python
-       rf_proba_all = rf_model.predict_proba(X_test_all)
-       rf_proba_mon = rf_model.predict_proba(X_mon_test_prep)
-       rf_conf_all = np.max(rf_proba_all, axis=1)
-       rf_conf_mon = np.max(rf_proba_mon, axis=1)
-       ```
-     * Same for XGB.
+6.  **Open-Set Rejection (Confidence Thresholding)**
+      * Note:
+          This implementation computes the threshold using the monitored test split,
+          not a separate validation set. The code does not create or use a dedicated
+          validation set.
 
-7.  **Open-Set Rejection (Confidence Thresholding)**
-      * For each percentile (`th_pct`):
+      * For each percentile (`threshold_pct`):
         
-        * **A. Compute Threshold from Monitored Test**
+        * **A. Compute a threshold from monitored validation-set confidences**
           ```python
-          rf_threshold = np.percentile(rf_conf_mon, th_pct)
+          y_mon_conf = np.max(y_mon_proba, axis=1)
+          threshold = np.percentile(y_mon_conf, threshold_pct)
+           ```
+          
+        * **B. Apply rejection separately**
+          Monitored:
+          
+          ```python
+          y_mon_pred = np.where(
+              y_mon_conf >= threshold,
+              y_mon_pred_classes,  
+               -1
+           )
           ```
           
-        * **B. Apply Rejection to All Test Samples**
+          Unmonitored:
+          
           ```python
-          rf_pred_all = rf_model.predict(X_test_all)
-          rf_pred_all[rf_conf_all < rf_threshold] = -1   # Rejection rule
+          y_unmon_conf = np.max(y_unmon_proba, axis=1)
+          
+          y_unmon_pred = np.where(
+              y_unmon_conf >= threshold,
+              y_unmon_pred_classes,  # argmax 기반 predicted classes
+               -1
+           )
           ```
-      * This implements: **Max-Softmax Open-Set Recognition (OSR)** Reject samples whose highest softmax probability is too low.
+        * **C. Combine**
+          ```python
+          y_pred_all = np.concatenate([y_mon_pred, y_unmon_pred])
+          y_true_all = np.concatenate([y_mon_test, y_unmon_test])
+          ```
+          
+          This implements **Max-Softmax Open-Set Recognition (OSR)**.
+
 
 8.  **Evaluation**
-     * Metrics computed using:
-       ```python
-       evaluate_open_world(...)
-       ```
+     * Metrics are computed directly inside the open-multi evaluation loop and stored in `results_open`.
      
      * **Includes:**
        * **Binary Detection**
-         TPR, FPR, TNR, Precision, ROC-AUC, PR-AUC
+         TPR, FPR, TNR, Precision, ROC-AUC
      
        * **Overall Metrics**
-         Overall Accuracy, Overall Macro-F1
+         Overall Accuracy
      
        * **Monitored 95-Class Metrics**
-         Accuracy & Macro-F1 on correctly accepted monitored samples only.
+          Monitored Accuracy, Monitored Macro-F1
      
      * Each result is appended to:
        ```
        results_open
        ```
+
+     * Threshold Stability:
+          Among configurations with similar ROC-AUC and Precision, mid-range
+          percentiles (e.g., 15–30%) are preferred to avoid unstable extremes.
+ 
 9.  **Final Model Selection**
      * The best model is selected using:
        * **ROC-AUC** (Primary)
        * **Precision** (Secondary)
+       * **Threshold Stability** (Tertiary)
    
-   * Matching your main code:
-       ```python
-       best = df_open.sort_values(['ROC_AUC', 'Precision'], ascending=[False, False]).iloc[0]
-       ```
+     * Final best row is selected accordingly using:
+        ```python
+        FINAL_MODEL_INFO = select_final_model_strict(
+            'open_multi',
+            df_open,
+        )
+        ```
 
 10. **95-Class Direct Classifier (Baseline)**
 
-     *(Updated to match your new implementation)*
-     
-     * Your new code **no longer trains a 96-class classifier**.
-     * Instead, it evaluates a proper **95-class monitored-only classifier**, trained only on monitored data.
-     
-     * This baseline:
-       * Trains on: **Monitored train**
-       * Tests on: **Monitored test + Unmonitored test**
-       * Does **not** perform rejection
-       * Shows performance degradation when unmonitored samples appear
-     
-     * **RF 95-class baseline:**
-        ```python
-        rf_95.fit(X_95_train_prep, y_95_train)
-        rf_95_pred = rf_95.predict(X_95_test_prep)
-        ```
-      
-     * **XGB 95-class baseline:**
-        ```python
-        xgb_95.fit(X_95_train_prep, y_95_train_enc)
-        ```
-     * Metrics stored in:
-        ```
-        results_96class → now renamed logically to 95-class baseline
-        ```
+     * The updated implementation evaluates a **monitored-only 95-class classifier**:
+
+      * Trained on: **Monitored training only**
+      * Tested on: **Monitored test + Unmonitored test**
+      * Performs **NO open-set rejection**
+
+     * This shows how poorly a closed-world classifier performs when unmonitored samples appear.
 
 ### 3\. Expected Output
 The console will display the model selection process and final results:
-```text
+```
 ================================================================================
 OPEN-WORLD MULTI-CLASS MODEL SELECTION
-Primary: ROC-AUC | Secondary: Precision
+Primary: ROC-AUC | Secondary: Precision | Tertiary: Threshold Stability
 ================================================================================
  SELECTED MODEL: RF
   • Corr Threshold: 0.99
-  • Threshold Percentile: 15.0%
+  • Threshold Percentile: 30.0%
   • ROC-AUC:   0.8403
-  • Precision: 0.9268
-  • TPR:       0.8500
-  • FPR:       0.4250
-  • Overall Acc: 0.7541
+  • Precision: 0.9712
+  • TPR:       0.7000
+  • FPR:       0.1317
+  • Overall Acc: 0.7050
 ================================================================================
 ```
+
 
 -----
 
