@@ -556,4 +556,5 @@ Please address any questions to the authors/developers:
   * **Hyewon Kim** (hhongyeahh@gmail.com)
   * **Yoonhyung Park** (pyoon820@gmail.com)
   * **Jeongin Heo** (jeongin0822@gmail.com)
+  * **Seoyeon Ahn** (aliceasy504@gmail.com)
 
